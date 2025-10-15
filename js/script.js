@@ -1,17 +1,16 @@
-// AustinIPA - Interactive Features
-
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.querySelector('.menu-toggle');
-    const navMenu = document.querySelector('.nav-menu');
+    const navLinks = document.querySelector('.nav-links');
     
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
+        menuToggle.addEventListener('click', function() {
+            navLinks.classList.toggle('active');
+            
             const spans = menuToggle.querySelectorAll('span');
-            if (navMenu.classList.contains('active')) {
-                spans[0].style.transform = 'rotate(45deg) translate(7px, 7px)';
+            if (navLinks.classList.contains('active')) {
+                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
                 spans[1].style.opacity = '0';
-                spans[2].style.transform = 'rotate(-45deg) translate(7px, -7px)';
+                spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
             } else {
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
@@ -20,10 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    const navLinks = document.querySelectorAll('.nav-menu a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            navMenu.classList.remove('active');
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', function() {
+            navLinks.classList.remove('active');
             const spans = menuToggle.querySelectorAll('span');
             spans[0].style.transform = 'none';
             spans[1].style.opacity = '1';
@@ -31,49 +29,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    const animateCounter = (element, target, duration = 2000) => {
-        let start = 0;
-        const increment = target / (duration / 16);
-        
-        const timer = setInterval(() => {
-            start += increment;
-            if (start >= target) {
-                element.textContent = target.toLocaleString();
-                clearInterval(timer);
-            } else {
-                element.textContent = Math.floor(start).toLocaleString();
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            element.textContent = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
             }
-        }, 16);
-    };
+        };
+        window.requestAnimationFrame(step);
+    }
     
-    const statNumbers = document.querySelectorAll('.stat-number');
-    const statsObserver = new IntersectionObserver((entries) => {
+    const statObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+            if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
                 const target = parseInt(entry.target.getAttribute('data-target'));
-                animateCounter(entry.target, target);
-                entry.target.classList.add('animated');
+                animateValue(entry.target, 0, target, 2000);
+                entry.target.classList.add('counted');
             }
         });
     }, { threshold: 0.5 });
     
-    statNumbers.forEach(stat => {
-        statsObserver.observe(stat);
+    document.querySelectorAll('.stat-num').forEach(stat => {
+        statObserver.observe(stat);
     });
     
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
+        anchor.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
             if (href !== '#') {
                 e.preventDefault();
                 const target = document.querySelector(href);
                 if (target) {
-                    const headerOffset = 80;
-                    const elementPosition = target.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    
                     window.scrollTo({
-                        top: offsetPosition,
+                        top: target.offsetTop - 80,
                         behavior: 'smooth'
                     });
                 }
@@ -81,92 +72,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    const navbar = document.querySelector('.navbar');
-    let lastScroll = 0;
-    
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-        
-        if (currentScroll > 100) {
-            navbar.style.background = 'rgba(253, 246, 227, 0.98)';
-            navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.12)';
-        } else {
-            navbar.style.background = 'rgba(253, 246, 227, 0.95)';
-            navbar.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
-        }
-        
-        lastScroll = currentScroll;
-    });
-    
-    const contactForm = document.getElementById('contact-form');
+    const contactForm = document.getElementById('contactForm');
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
+        contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const formData = new FormData(contactForm);
-            const data = Object.fromEntries(formData);
-            
-            const button = contactForm.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            button.textContent = 'Message Sent! ✓';
-            button.style.background = 'linear-gradient(135deg, #009688, #00796b)';
-            
-            contactForm.reset();
+            const submitBtn = this.querySelector('.btn-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Message Sent! ✓';
+            submitBtn.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
             
             setTimeout(() => {
-                button.textContent = originalText;
-                button.style.background = 'linear-gradient(135deg, var(--primary-gold), var(--secondary-gold))';
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = 'linear-gradient(135deg, var(--gold), var(--dark-gold))';
+                contactForm.reset();
             }, 3000);
-            
-            console.log('Form submitted:', data);
         });
     }
     
-    const fadeElements = document.querySelectorAll('.about-card, .culture-feature, .event-card, .community-card, .testimonial-card');
+    document.getElementById('year').textContent = new Date().getFullYear();
     
+    const fadeElements = document.querySelectorAll('.card, .event, .community-card');
     const fadeObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.style.opacity = '0';
-                entry.target.style.transform = 'translateY(30px)';
-                
-                setTimeout(() => {
-                    entry.target.style.transition = 'all 0.6s ease-out';
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }, 100);
-                
-                fadeObserver.unobserve(entry.target);
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
             }
         });
     }, { threshold: 0.1 });
     
-    fadeElements.forEach(element => {
-        fadeObserver.observe(element);
+    fadeElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        fadeObserver.observe(el);
     });
-    
-    const heroBackground = document.querySelector('.hero-background');
-    if (heroBackground) {
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const rate = scrolled * 0.3;
-            heroBackground.style.transform = `translateY(${rate}px)`;
-        });
-    }
-    
-    const patternOverlays = document.querySelectorAll('.pattern-overlay');
-    patternOverlays.forEach(overlay => {
-        overlay.addEventListener('mouseenter', () => {
-            overlay.style.opacity = '1';
-        });
-        
-        overlay.addEventListener('mouseleave', () => {
-            overlay.style.opacity = '0.9';
-        });
-    });
-    
-    const yearElement = document.querySelector('.current-year');
-    if (yearElement) {
-        yearElement.textContent = new Date().getFullYear();
-    }
 });
